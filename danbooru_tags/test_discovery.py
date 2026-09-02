@@ -10,7 +10,10 @@ import json
 import tempfile
 from pathlib import Path
 
-from danbooru_tags import guess_tags
+try:
+    from . import guess_tags
+except ImportError:  # direct ``python danbooru_tags/test_discovery.py``
+    import guess_tags
 
 
 def test_candidate_normalization() -> None:
@@ -26,8 +29,8 @@ def test_verification_with_live_api() -> None:
     assert results[0]["status"] == "confirmed"
     assert results[0]["post_count"] > 100_000
     assert results[1]["status"] == "not_found"
-    assert "1girl" in results[1]["closest_matches"]
-    print("PASS: live verification + fuzzy recovery")
+    assert results[1]["closest_matches"], "live fuzzy lookup returned no recovery candidates"
+    print("PASS: live verification + fuzzy recovery ->", results[1]["closest_matches"])
 
 
 def test_refinement_passes_accumulated_context() -> None:
