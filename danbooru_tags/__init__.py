@@ -1,4 +1,4 @@
-"""Step 1 Danbooru tag discovery client."""
+"""Danbooru tag discovery client and LLM-assisted discovery loop."""
 
 from .danbooru_client import (
     autocomplete,
@@ -9,6 +9,7 @@ from .danbooru_client import (
     summarize_tag,
     wiki_body,
 )
+from .guess_tags import guessing_session, llm_propose_tags, verify_candidates
 
 __all__ = [
     "autocomplete",
@@ -18,4 +19,7 @@ __all__ = [
     "sample_posts_for_tag",
     "summarize_tag",
     "wiki_body",
+    "guessing_session",
+    "llm_propose_tags",
+    "verify_candidates",
 ]
