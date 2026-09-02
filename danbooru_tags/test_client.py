@@ -3,15 +3,23 @@
 from danbooru_client import check_tags_exist, fuzzy_lookup, summarize_tag
 
 
+NONEXISTENT_TAG = "this_tag_does_not_exist_zzz"
+
+
 def test_known_real_tags() -> None:
-    result = check_tags_exist(
-        ["1girl", "solo", "blue_eyes", "this_tag_does_not_exist_zzz"]
-    )
+    result = check_tags_exist(["1girl", "solo", "blue_eyes"])
     assert "1girl" in result and result["1girl"]["post_count"] > 100_000
     assert "solo" in result
     assert "blue_eyes" in result
-    assert "this_tag_does_not_exist_zzz" not in result
-    print("PASS: existence check")
+    print("PASS: real-tag existence lookup")
+
+
+def test_nonexistent_tag_returns_zero_results() -> None:
+    result = check_tags_exist([NONEXISTENT_TAG])
+    assert result == {}
+    summary = summarize_tag(NONEXISTENT_TAG)
+    assert summary == {"tag": NONEXISTENT_TAG, "exists": False}
+    print("PASS: non-existent tag returns zero results")
 
 
 def test_summary() -> None:
@@ -29,5 +37,6 @@ def test_fuzzy() -> None:
 
 if __name__ == "__main__":
     test_known_real_tags()
+    test_nonexistent_tag_returns_zero_results()
     test_summary()
     test_fuzzy()
