@@ -44,11 +44,11 @@ def _get(path: str, params: dict[str, Any] | None = None) -> Any:
 
 
 def _exact_name_rows(names: list[str]) -> dict[str, dict[str, Any]]:
-    """Perform one exact-name request and discard non-exact rows."""
+    """Perform one case-insensitive exact-name batch request."""
     data = _get(
         "/tags.json",
         {
-            "search[name]": ",".join(names),
+            "search[name_lower_comma]": ",".join(names),
             "only": "name,post_count,category,is_deprecated,antecedent_alias[antecedent_name]",
             "limit": 1000,
         },
@@ -65,10 +65,9 @@ def _exact_name_rows(names: list[str]) -> dict[str, dict[str, Any]]:
             continue
 
         antecedent = row.get("antecedent_alias")
-        if isinstance(antecedent, dict):
-            is_alias_of = antecedent.get("antecedent_name")
-        else:
-            is_alias_of = None
+        is_alias_of = (
+            antecedent.get("antecedent_name") if isinstance(antecedent, dict) else None
+        )
 
         result[requested_name] = {
             "post_count": row["post_count"],
@@ -86,12 +85,9 @@ def check_tags_exist(names: list[str]) -> dict[str, dict]:
     names that exist. Missing names are absent from the result, so callers can
     distinguish a real zero-result lookup from a tag whose post count is zero.
 
-    Danbooru's search syntax has changed over time and installations may differ
-    in how a comma-joined ``search[name]`` is interpreted. We therefore verify
-    that the batch response contains the requested names and fall back to one
-    exact request per missing name. This preserves the cheap batch path while
-    preventing a false "not found" result when the endpoint treats the comma
-    as a search expression instead of an exact-name list.
+    Danbooru's ``name_lower_comma`` search performs a case-insensitive exact
+    comparison against each comma-separated name, allowing one request for a
+    batch while the client still reconciles results case-insensitively.
     """
     if not names:
         return {}
@@ -103,8 +99,8 @@ def check_tags_exist(names: list[str]) -> dict[str, dict]:
     result = _exact_name_rows(unique_names)
     missing = [name for name in unique_names if name not in result]
 
-    # Fallback required by the implementation plan when the live API does not
-    # honor comma-joined exact-name lookup as expected.
+    # Keep the fallback for defensive compatibility if a future API deployment
+    # changes or omits comma-qualified name search behavior.
     for name in missing:
         result.update(_exact_name_rows([name]))
 
