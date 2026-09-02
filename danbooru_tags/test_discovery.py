@@ -1,7 +1,7 @@
 """Tests for the Step 3-5 discovery surface.
 
-The live test deliberately verifies a real tag and a one-character near-miss
-against Danbooru; the remaining checks avoid LLM calls.
+The live test deliberately verifies a real tag, a guaranteed nonexistent tag,
+and fuzzy recovery against Danbooru; the remaining checks avoid LLM calls.
 """
 
 from __future__ import annotations
@@ -16,6 +16,9 @@ except ImportError:  # direct ``python danbooru_tags/test_discovery.py``
     import guess_tags
 
 
+NONEXISTENT_TAG = "this_tag_does_not_exist_zzz"
+
+
 def test_candidate_normalization() -> None:
     raw = [["blue_eyes", "0.9"], ["blue_eyes", 0.8], ["", 0.5], ["bad", 2]]
     assert guess_tags._normalize_candidates(raw) == [("blue_eyes", 0.9)]
@@ -24,13 +27,16 @@ def test_candidate_normalization() -> None:
 
 def test_verification_with_live_api() -> None:
     results = guess_tags.verify_candidates(
-        [("1girl", 0.99), ("1grl", 0.5)]
+        [("1girl", 0.99), (NONEXISTENT_TAG, 0.5)]
     )
     assert results[0]["status"] == "confirmed"
     assert results[0]["post_count"] > 100_000
     assert results[1]["status"] == "not_found"
-    assert results[1]["closest_matches"], "live fuzzy lookup returned no recovery candidates"
-    print("PASS: live verification + fuzzy recovery ->", results[1]["closest_matches"])
+    assert NONEXISTENT_TAG not in results[1].get("closest_matches", [])
+
+    fuzzy = guess_tags.fuzzy_lookup("1grl", limit=5)
+    assert fuzzy, "live fuzzy lookup returned no recovery candidates"
+    print("PASS: live verification + fuzzy recovery ->", [row["name"] for row in fuzzy])
 
 
 def test_refinement_passes_accumulated_context() -> None:
