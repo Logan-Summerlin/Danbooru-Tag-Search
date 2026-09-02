@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - step-1-danbooru-client
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
