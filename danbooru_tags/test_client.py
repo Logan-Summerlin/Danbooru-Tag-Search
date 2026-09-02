@@ -31,11 +31,12 @@ def test_summary() -> None:
 
 
 def test_fuzzy() -> None:
-    # Query an existing tag through the fuzzy endpoint. This verifies the
-    # endpoint and response parsing without assuming that a particular typo
-    # survives Danbooru's PostgreSQL trigram-similarity prefilter.
-    near = fuzzy_lookup("hatsune_miku")
-    assert any(row["name"] == "hatsune_miku" for row in near)
+    # Use a genuine one-character typo, which is the intended use of the
+    # fuzzy lookup. Test response shape rather than Danbooru's live ranking,
+    # since the client cannot guarantee which near-match ranks first.
+    near = fuzzy_lookup("1grl")  # missing the "i" in "1girl"
+    assert near, "fuzzy_lookup returned no results for a near-miss of a known tag"
+    assert all({"name", "post_count", "category"} <= row.keys() for row in near)
     print("PASS: fuzzy lookup ->", [row["name"] for row in near])
 
 
