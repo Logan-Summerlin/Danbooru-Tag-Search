@@ -30,10 +30,10 @@ def test_summary() -> None:
 
 
 def test_fuzzy() -> None:
-    # Danbooru uses a strict Levenshtein-distance cutoff for fuzzy matching.
-    # "bloo_eyess" is exactly at the cutoff and is therefore not guaranteed to
-    # match. Use a one-edit typo so this test checks supported fuzzy recovery.
-    near = fuzzy_lookup("blue_eyess")
+    # Use a one-character deletion of a known tag. This stays very close to
+    # the canonical spelling and exercises Danbooru's fuzzy recovery without
+    # depending on a marginal trigram-similarity case.
+    near = fuzzy_lookup("blue_eys")
     assert any(row["name"] == "blue_eyes" for row in near)
     print("PASS: fuzzy recovery ->", [row["name"] for row in near])
 
