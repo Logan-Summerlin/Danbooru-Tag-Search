@@ -7,10 +7,11 @@ NONEXISTENT_TAG = "this_tag_does_not_exist_zzz"
 
 
 def test_known_real_tags() -> None:
-    result = check_tags_exist(["1girl", "solo", "blue_eyes"])
+    result = check_tags_exist(["1girl", "solo", "blue_eyes", NONEXISTENT_TAG])
     assert "1girl" in result and result["1girl"]["post_count"] > 100_000
     assert "solo" in result
     assert "blue_eyes" in result
+    assert NONEXISTENT_TAG not in result
     print("PASS: real-tag existence lookup")
 
 
@@ -30,11 +31,10 @@ def test_summary() -> None:
 
 
 def test_fuzzy() -> None:
-    # Use a one-character deletion of a known tag. This stays very close to
-    # the canonical spelling and exercises Danbooru's fuzzy recovery without
-    # depending on a marginal trigram-similarity case.
-    near = fuzzy_lookup("blue_eys")
-    assert any(row["name"] == "blue_eyes" for row in near)
+    # This is Danbooru's own upstream fuzzy-match regression case:
+    # hatsune_mika -> hatsune_miku.
+    near = fuzzy_lookup("hatsune_mika")
+    assert any(row["name"] == "hatsune_miku" for row in near)
     print("PASS: fuzzy recovery ->", [row["name"] for row in near])
 
 
