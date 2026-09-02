@@ -15,15 +15,15 @@ from typing import Any
 
 import requests
 
-from .danbooru_client import summarize_tag
+try:
+    from .danbooru_client import summarize_tag
+except ImportError:  # pragma: no cover - direct script execution
+    from danbooru_client import summarize_tag
 
 DEFAULT_MODEL = os.getenv("TAG_DISCOVERY_MODEL", "openai/gpt-4o-mini")
 DEFAULT_BASE_URL = os.getenv("TAG_DISCOVERY_BASE_URL", "https://openrouter.ai/api/v1")
 OUTPUT_PATH = Path(__file__).with_name("tag_strategy.md")
 
-# Deliberately cover all five categories and several frequency bands. The
-# script filters unavailable/deprecated examples rather than silently inventing
-# data.
 SAMPLE_TAGS = [
     "smile", "looking_at_viewer", "hair_ribbon", "sitting", "long_hair",
     "blue_eyes", "red_dress", "1girl", "2boys", "multiple_girls",
