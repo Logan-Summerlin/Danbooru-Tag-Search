@@ -48,7 +48,7 @@ def _exact_name_rows(names: list[str]) -> dict[str, dict[str, Any]]:
     data = _get(
         "/tags.json",
         {
-            "search[name_lower_comma]": ",".join(names),
+            "search[name_normalize]": ",".join(names),
             "only": "name,post_count,category,is_deprecated,antecedent_alias[antecedent_name]",
             "limit": 1000,
         },
@@ -85,9 +85,8 @@ def check_tags_exist(names: list[str]) -> dict[str, dict]:
     names that exist. Missing names are absent from the result, so callers can
     distinguish a real zero-result lookup from a tag whose post count is zero.
 
-    Danbooru's ``name_lower_comma`` search performs a case-insensitive exact
-    comparison against each comma-separated name, allowing one request for a
-    batch while the client still reconciles results case-insensitively.
+    Danbooru's current ``name_normalize`` search normalizes the supplied value
+    and splits comma-separated names, so one request handles a whole batch.
     """
     if not names:
         return {}
@@ -99,8 +98,8 @@ def check_tags_exist(names: list[str]) -> dict[str, dict]:
     result = _exact_name_rows(unique_names)
     missing = [name for name in unique_names if name not in result]
 
-    # Keep the fallback for defensive compatibility if a future API deployment
-    # changes or omits comma-qualified name search behavior.
+    # Defensive fallback: a future API change that stops supporting comma
+    # splitting must not turn a valid individual tag into a false negative.
     for name in missing:
         result.update(_exact_name_rows([name]))
 
