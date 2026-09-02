@@ -46,6 +46,7 @@ def test_refinement_passes_accumulated_context() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         guess_tags.LOG_PATH = Path(tmp) / "session_log.jsonl"
         state = {"round": 0}
+        feedback = iter(["it's a school uniform", "done"])
 
         def fake_propose(description, hints, strategy_doc, prior_results=None):
             state["round"] += 1
@@ -68,8 +69,7 @@ def test_refinement_passes_accumulated_context() -> None:
         ]
         try:
             result = guess_tags.guessing_session(
-                "a girl standing",
-                input_fn=iter(["it's a school uniform", "done"]).__next__,
+                "a girl standing", input_fn=lambda _prompt: next(feedback)
             )
         finally:
             guess_tags.llm_propose_tags = original
